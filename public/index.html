@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bagi Rata</title>
+    
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Memuat Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* bg-slate-50 */
+        }
+        #emoji-palette {
+            position: absolute;
+            display: none;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            z-index: 100;
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 0.5rem;
+            max-width: 280px; 
+        }
+        #emoji-palette span {
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0.25rem;
+            border-radius: 9999px;
+            transition: all 0.2s ease-in-out;
+        }
+        #emoji-palette span:hover {
+            transform: scale(1.2);
+            background-color: #f3f4f6;
+        }
+        /* Style untuk sel tabel yang bisa diedit */
+        [contenteditable="true"] {
+            outline: none;
+            border: 2px solid transparent;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            transition: border-color 0.2s;
+            min-width: 50px; 
+            background-color: #f8fafc;
+        }
+        [contenteditable="true"]:focus {
+            border-color: #4f46e5; /* indigo-600 */
+            background-color: white;
+        }
+        [contenteditable="true"][data-placeholder]:empty::before {
+            content: attr(data-placeholder);
+            color: #9ca3af; /* gray-400 */
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-800">
+
+    <div class="container mx-auto max-w-3xl p-4 md:p-8">
+        
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">Bagi Rata</h1>
+            <p class="text-slate-500 mt-2 text-lg">Hitung patungan jadi lebih mudah dan transparan.</p>
+        </header>
+
+        <main class="space-y-8">
+            <!-- Panel Kontrol AI -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-slate-900">Scan Struk (Opsional)</h3>
+                    <button id="reset-button" title="Mulai Baru" class="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="openCameraButton" class="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-xl hover:bg-slate-900 transition-colors flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <span>Ambil Foto</span>
+                    </button>
+                    <label for="fileInput" class="w-full bg-slate-100 text-slate-700 font-bold py-3 px-4 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center space-x-2 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        <span>Upload Struk</span>
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden">
+                </div>
+                <div id="imagePreviewContainer" class="mt-4 hidden">
+                    <img id="imagePreview" class="rounded-lg max-w-xs h-auto mx-auto border-2 border-slate-200" src="" alt="Image Preview">
+                    <button id="processButton" class="mt-4 w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-indigo-700 transition-colors">
+                        Mulai Analisis
+                    </button>
+                </div>
+            </div>
+
+            <div id="loader" class="hidden flex items-center justify-center p-6 space-x-3">
+                <div class="w-5 h-5 border-2 border-t-indigo-500 border-slate-200 rounded-full animate-spin"></div>
+                <p id="statusText" class="text-slate-500 font-medium">Menganalisis struk...</p>
+            </div>
+
+            <!-- Tabel Interaktif -->
+            <div class="space-y-8">
+                <div id="result"></div>
+                <div id="additional-costs"></div>
+            </div>
+            
+            <!-- Ringkasan -->
+            <div id="summary"></div>
+        </main>
+
+        <footer class="text-center py-10 text-sm text-slate-400">
+            <p>© 2025 | Sheetizen</p>
+        </footer>
+    </div>
+
+    <div id="emoji-palette"></div>
+    <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-75 flex-col items-center justify-center z-50 hidden">
+        <div class="relative bg-slate-900 p-4 rounded-lg shadow-2xl w-full max-w-lg">
+            <video id="cameraFeed" class="w-full rounded-md" autoplay playsinline></video>
+            <button id="closeModalButton" class="absolute top-2 right-2 bg-white rounded-full p-2 text-slate-800 hover:bg-slate-200"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+        </div>
+        <button id="captureButton" class="mt-4 bg-indigo-600 text-white font-bold py-3 px-8 rounded-full hover:bg-indigo-700 transition-colors border-4 border-white">Ambil Gambar</button>
+    </div>
+
+    <script type="module">
+        // === DOM SELECTION ===
+        const fileInput = document.getElementById('fileInput');
+        const openCameraButton = document.getElementById('openCameraButton');
+        const processButton = document.getElementById('processButton');
+        const loader = document.getElementById('loader');
+        const statusText = document.getElementById('statusText');
+        const resultDiv = document.getElementById('result');
+        const additionalCostsDiv = document.getElementById('additional-costs');
+        const summaryDiv = document.getElementById('summary');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const emojiPalette = document.getElementById('emoji-palette');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraFeed = document.getElementById('cameraFeed');
+        const cameraCanvas = document.getElementById('cameraCanvas');
+        const captureButton = document.getElementById('captureButton');
+        const closeModalButton = document.getElementById('closeModalButton');
+        const resetButton = document.getElementById('reset-button');
+
+        // === STATE MANAGEMENT ===
+        let billItems = []; 
+        let additionalCosts = []; 
+        let strukTotalFromAI = 0;
+        let imageDataUrl = null; 
+        const emojis = ['😃', '😊', '😎', '🤩', '🧑‍💻', '🙋‍♀️', '🤷‍♂️', '🍕', '🍔', '☕️'];
+        let emojiNames = {}; 
+
+        // === EVENT LISTENERS ===
+        openCameraButton.addEventListener('click', openCamera);
+        closeModalButton.addEventListener('click', closeCamera);
+        captureButton.addEventListener('click', capturePhoto);
+        fileInput.addEventListener('change', handleFileUpload);
+        processButton.addEventListener('click', handleProcess);
+        resetButton.addEventListener('click', resetApp);
+        document.addEventListener('click', (e) => {
+            if (!emojiPalette.contains(e.target) && !e.target.matches('.owner-cell')) {
+                emojiPalette.style.display = 'none';
+            }
+        });
+
+        // === INITIALIZATION ===
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAllTables();
+        });
+
+        // === CORE FUNCTIONS ===
+        function renderAllTables() {
+            displayTable();
+            displayAdditionalCosts();
+            calculateSummary();
+        }
+
+        function resetApp() {
+            if (confirm("Apakah Anda yakin ingin mereset semua data?")) {
+                billItems = [];
+                additionalCosts = [];
+                strukTotalFromAI = 0;
+                imageDataUrl = null;
+                emojiNames = {};
+                imagePreviewContainer.classList.add('hidden');
+                fileInput.value = '';
+                renderAllTables();
+            }
+        }
+
+        // === CAMERA & FILE LOGIC ===
+        async function openCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert("Maaf, browser Anda tidak mendukung akses kamera."); return; }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                cameraFeed.srcObject = stream;
+                cameraModal.classList.remove('hidden');
+                cameraModal.classList.add('flex');
+            } catch (err) { console.error("Error accessing camera: ", err); alert("Tidak bisa mengakses kamera. Pastikan Anda memberikan izin."); }
+        }
+        function closeCamera() {
+            const stream = cameraFeed.srcObject;
+            if (stream) { stream.getTracks().forEach(track => track.stop()); }
+            cameraFeed.srcObject = null;
+            cameraModal.classList.add('hidden');
+            cameraModal.classList.remove('flex');
+        }
+        function capturePhoto() {
+            cameraCanvas.width = cameraFeed.videoWidth;
+            cameraCanvas.height = cameraFeed.videoHeight;
+            cameraCanvas.getContext('2d').drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
+            imageDataUrl = cameraCanvas.toDataURL('image/jpeg');
+            displayPreview(imageDataUrl);
+            closeCamera();
+        }
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onloadend = () => { imageDataUrl = reader.result; displayPreview(imageDataUrl); };
+            reader.readAsDataURL(file);
+        }
+        function displayPreview(dataUrl) {
+            imagePreview.src = dataUrl;
+            imagePreviewContainer.classList.remove('hidden');
+        }
+        
+        // **AI PROCESSING LOGIC (UNTUK DEPLOYMENT)**
+        async function handleProcess() {
+            if (!imageDataUrl) { alert("Harap upload atau ambil foto struk terlebih dahulu."); return; }
+            loader.classList.remove('hidden');
+            statusText.textContent = "Menganalisis struk...";
+            processButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageDataUrl: imageDataUrl })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error dari server: ${errorText}`);
+                }
+
+                const geminiData = await response.json();
+                const responseText = geminiData.candidates[0].content.parts[0].text;
+                
+                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("Respons AI tidak mengandung format JSON yang valid.");
+                
+                const cleanedText = jsonMatch[0];
+                const parsedData = JSON.parse(cleanedText);
+                
+                if (!parsedData.items || typeof parsedData.total_akhir === 'undefined') {
+                    throw new Error("Respons AI tidak memiliki format yang diharapkan.");
+                }
+
+                strukTotalFromAI = Number(parsedData.total_akhir) || 0;
+                
+                billItems = [];
+                additionalCosts = [];
+
+                const hasUnitPrice = parsedData.items.every(item => item.hasOwnProperty('harga'));
+                if (hasUnitPrice) {
+                    parsedData.items.forEach(item => {
+                        const quantity = Number(item.jumlah) || 1;
+                        for (let i = 0; i < quantity; i++) {
+                            billItems.push({ item: item.item, harga: Number(item.harga) || 0, owners: [] });
+                        }
+                    });
+                } else {
+                    const itemSubtotal = Number(parsedData.subtotal_item) || 0;
+                    const totalQuantity = parsedData.items.reduce((sum, item) => sum + (Number(item.jumlah) || 1), 0);
+                    if (totalQuantity > 0 && itemSubtotal > 0) {
+                        const averagePrice = itemSubtotal / totalQuantity;
+                        parsedData.items.forEach(item => {
+                            const quantity = Number(item.jumlah) || 1;
+                            for (let i = 0; i < quantity; i++) {
+                                billItems.push({ item: item.item, harga: averagePrice, owners: [] });
+                            }
+                        });
+                    }
+                }
+
+                additionalCosts = (parsedData.other_costs || []).map(cost => ({
+                    name: cost.name,
+                    amount: Number(cost.amount) || 0,
+                    owners: []
+                }));
+
+                statusText.textContent = "Analisis berhasil!";
+                renderAllTables();
+
+            } catch (error) {
+                console.error("Error:", error);
+                statusText.textContent = `Terjadi kesalahan: ${error.message}`;
+            } finally {
+                processButton.disabled = false;
+            }
+        }
+
+        // === TABLE RENDERING & INTERACTION ===
+        function createTableStructure(title, data, type) {
+            const headers = type === 'item' 
+                ? ['Item', 'Harga', 'Pemilik', ''] 
+                : ['Deskripsi', 'Jumlah', 'Dibagi ke', ''];
+            
+            let bodyHTML = data.map((entry, index) => {
+                const ownerDisplay = entry.owners.length > 0 ? entry.owners.join(' ') : '❔';
+                const amountColor = type === 'cost' && entry.amount < 0 ? 'text-green-600' : 'text-slate-800';
+                const nameField = type === 'item' ? entry.item : entry.name;
+                const valueField = type === 'item' ? entry.harga : entry.amount;
+                const namePlaceholder = type === 'item' ? 'Nama Item...' : 'Deskripsi...';
+                const valuePlaceholder = '0';
+                const valueContent = valueField !== 0 ? valueField : '';
+
+                return `<tr class="group"><td class="p-2 w-2/5"><div contenteditable="true" class="table-input" data-placeholder="${namePlaceholder}" onblur="window.updateEntry(${index}, '${type}', 'name', this.innerText)">${nameField}</div></td><td class="p-2 w-1/5"><div contenteditable="true" class="table-input ${amountColor}" data-placeholder="${valuePlaceholder}" onblur="window.updateEntry(${index}, '${type}', 'value', this.innerText)">${valueContent}</div></td><td class="p-2 w-1/5 text-2xl text-center cursor-pointer owner-cell" onclick="window.showEmojiSelector(event, ${index}, '${type}')">${ownerDisplay}</td><td class="p-2 w-auto text-right"><button class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.deleteEntry(${index}, '${type}')"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button></td></tr>`;
+            }).join('');
+
+            return `<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="text-xl font-semibold text-slate-900 mb-4">${title}</h3><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead><tr>${headers.map(h => `<th class="px-2 py-3 font-semibold text-slate-500 uppercase tracking-wider">${h}</th>`).join('')}</tr></thead><tbody>${bodyHTML}</tbody></table></div><button class="mt-4 text-indigo-600 font-semibold hover:text-indigo-800 transition-colors" onclick="window.addNewEntry('${type}')">+ Tambah ${type === 'item' ? 'Item' : 'Biaya'}</button></div>`;
+        }
+
+        function displayTable() {
+            resultDiv.innerHTML = createTableStructure('Daftar Belanjaan', billItems, 'item');
+        }
+
+        function displayAdditionalCosts() {
+            additionalCostsDiv.innerHTML = createTableStructure('Biaya Tambahan & Diskon', additionalCosts, 'cost');
+        }
+
+        window.addNewEntry = (type) => {
+            if (type === 'item') { billItems.push({ item: "", harga: 0, owners: [] }); } 
+            else { additionalCosts.push({ name: "", amount: 0, owners: [] }); }
+            renderAllTables();
+        };
+
+        window.deleteEntry = (index, type) => {
+            const list = type === 'item' ? billItems : additionalCosts;
+            list.splice(index, 1);
+            renderAllTables();
+        };
+
+        window.updateEntry = (index, type, field, value) => {
+            const list = type === 'item' ? billItems : additionalCosts;
+            const keyName = field === 'name' ? (type === 'item' ? 'item' : 'name') : (type === 'item' ? 'harga' : 'amount');
+            list[index][keyName] = field === 'value' ? parseFloat(value.replace(/[^0-9.-]+/g,"")) || 0 : value;
+            renderAllTables();
+        };
+
+        window.showEmojiSelector = function(event, itemIndex, type) {
+            event.stopPropagation();
+            emojiPalette.innerHTML = '';
+            emojis.forEach(emoji => {
+                const span = document.createElement('span');
+                span.textContent = emoji;
+                span.onclick = () => window.toggleOwner(itemIndex, emoji, type);
+                emojiPalette.appendChild(span);
+            });
+            const rect = event.target.getBoundingClientRect();
+            emojiPalette.style.display = 'flex';
+            emojiPalette.style.top = `${rect.bottom + window.scrollY + 5}px`;
+            emojiPalette.style.left = `${rect.left + window.scrollX}px`;
+        }
+
+        window.toggleOwner = function(itemIndex, emoji, type) {
+            const list = type === 'item' ? billItems : additionalCosts;
+            const item = list[itemIndex];
+            const ownerIndex = item.owners.indexOf(emoji);
+            if (ownerIndex > -1) { item.owners.splice(ownerIndex, 1); } else { item.owners.push(emoji); }
+            if (!emojiNames.hasOwnProperty(emoji)) { emojiNames[emoji] = ''; }
+            emojiPalette.style.display = 'none';
+            renderAllTables();
+        }
+
+        window.updateName = (emoji, inputElement) => { emojiNames[emoji] = inputElement.innerText; };
+        
+        // === SUMMARY CALCULATION ===
+        function calculateSummary() {
+            const totals = {};
+            let totalOfSplits = 0;
+            const allInvolvedEmojis = new Set();
+            [...billItems, ...additionalCosts].forEach(entry => entry.owners.forEach(o => allInvolvedEmojis.add(o)));
+            allInvolvedEmojis.forEach(emoji => { totals[emoji] = { sum: 0, items: [] }; });
+
+            billItems.forEach(item => {
+                const numOwners = item.owners.length;
+                if (numOwners > 0) {
+                    const pricePerOwner = item.harga / numOwners;
+                    item.owners.forEach(owner => {
+                        totals[owner].sum += pricePerOwner;
+                        const itemNote = numOwners > 1 ? `${item.item} (dibagi ${numOwners})` : item.item;
+                        totals[owner].items.push(itemNote);
+                    });
+                }
+            });
+
+            additionalCosts.forEach(cost => {
+                const numOwners = cost.owners.length;
+                if (numOwners > 0) {
+                    const amountPerOwner = cost.amount / numOwners;
+                    cost.owners.forEach(owner => {
+                        totals[owner].sum += amountPerOwner;
+                        const itemNote = `${cost.name} (dibagi ${numOwners})`;
+                        totals[owner].items.push(itemNote);
+                    });
+                }
+            });
+
+            if (billItems.length === 0 && additionalCosts.length === 0) {
+                summaryDiv.innerHTML = '';
+                return;
+            }
+
+            const totalExpenditure = billItems.reduce((sum, item) => sum + item.harga, 0) + additionalCosts.reduce((sum, cost) => sum + cost.amount, 0);
+
+            let summaryHTML = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="text-xl font-semibold text-slate-900 mb-4">Ringkasan Pembayaran</h3><div class="space-y-4">`;
+            for (const owner in totals) {
+                const nameValue = emojiNames[owner] || '';
+                const finalPersonTotal = totals[owner].sum;
+                totalOfSplits += finalPersonTotal;
+                const itemsListHTML = totals[owner].items.map(item => `<li class="truncate text-slate-500">${item}</li>`).join('');
+                
+                summaryHTML += `<div class="bg-slate-50 p-4 rounded-xl"><div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"><div class="flex items-center gap-3"><span class="text-3xl">${owner}</span><div contenteditable="true" class="table-input text-lg font-medium w-full sm:w-auto" data-placeholder="Nama..." onblur="window.updateName('${owner}', this)">${nameValue}</div></div><span class="font-semibold text-slate-900 text-left sm:text-right text-lg flex-shrink-0">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(finalPersonTotal)}</span></div><div class="mt-3 pl-12 text-sm"><ul class="list-disc list-inside space-y-1">${itemsListHTML}</ul></div></div>`;
+            }
+
+            const difference = totalExpenditure - totalOfSplits;
+            const differenceColor = Math.abs(difference) < 1 ? 'text-slate-500' : 'text-orange-500';
+
+            summaryHTML += `</div><hr class="my-6 border-slate-200"><div class="space-y-3 text-md">
+                <div class="flex justify-between font-semibold"><span class="text-slate-600">TOTAL DIBAGI</span><span>${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalOfSplits)}</span></div>
+                <div class="flex justify-between items-center font-bold text-lg text-indigo-600"><span>Total Pengeluaran</span><span>${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalExpenditure)}</span></div>
+                <div class="flex justify-between text-sm ${differenceColor}"><span class="font-medium">SELISIH</span><span class="font-semibold">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(difference)}</span></div>
+            `;
+            if (strukTotalFromAI > 0) {
+                 summaryHTML += `<div class="flex justify-between items-center text-sm text-slate-500 pt-2 border-t border-slate-200 mt-2"><span>Total Struk (dari AI)</span><span>${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(strukTotalFromAI)}</span></div>`;
+            }
+            summaryHTML += `</div></div>`;
+            summaryDiv.innerHTML = summaryHTML;
+        }
+    </script>
+</body>
+</html>
