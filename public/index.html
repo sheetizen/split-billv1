@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bagi Rata</title>
+    <title>Split Bill | Sheetizen</title>
     
     <!-- Memuat Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -101,8 +101,14 @@
                 </div>
             </div>
 
-            <div id="loader" class="hidden flex items-center justify-center p-6 space-x-3">
-                <div class="w-5 h-5 border-2 border-t-indigo-500 border-slate-200 rounded-full animate-spin"></div>
+            <div id="loader" class="hidden flex items-center justify-center p-6 space-x-3 bg-white rounded-2xl shadow-sm border border-slate-200">
+                <div id="loader-spinner" class="w-5 h-5 border-2 border-t-indigo-500 border-slate-200 rounded-full animate-spin"></div>
+                <div id="loader-success" class="hidden text-green-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <div id="loader-error" class="hidden text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </div>
                 <p id="statusText" class="text-slate-500 font-medium">Menganalisis struk...</p>
             </div>
 
@@ -125,6 +131,7 @@
     <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-75 flex-col items-center justify-center z-50 hidden">
         <div class="relative bg-slate-900 p-4 rounded-lg shadow-2xl w-full max-w-lg">
             <video id="cameraFeed" class="w-full rounded-md" autoplay playsinline></video>
+            <canvas id="cameraCanvas" class="hidden"></canvas>
             <button id="closeModalButton" class="absolute top-2 right-2 bg-white rounded-full p-2 text-slate-800 hover:bg-slate-200"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
         <button id="captureButton" class="mt-4 bg-indigo-600 text-white font-bold py-3 px-8 rounded-full hover:bg-indigo-700 transition-colors border-4 border-white">Ambil Gambar</button>
@@ -149,6 +156,9 @@
         const captureButton = document.getElementById('captureButton');
         const closeModalButton = document.getElementById('closeModalButton');
         const resetButton = document.getElementById('reset-button');
+        const loaderSpinner = document.getElementById('loader-spinner');
+        const loaderSuccess = document.getElementById('loader-success');
+        const loaderError = document.getElementById('loader-error');
 
         // === STATE MANAGEMENT ===
         let billItems = []; 
@@ -192,6 +202,7 @@
                 emojiNames = {};
                 imagePreviewContainer.classList.add('hidden');
                 fileInput.value = '';
+                loader.classList.add('hidden');
                 renderAllTables();
             }
         }
@@ -214,12 +225,16 @@
             cameraModal.classList.remove('flex');
         }
         function capturePhoto() {
-            cameraCanvas.width = cameraFeed.videoWidth;
-            cameraCanvas.height = cameraFeed.videoHeight;
-            cameraCanvas.getContext('2d').drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
-            imageDataUrl = cameraCanvas.toDataURL('image/jpeg');
-            displayPreview(imageDataUrl);
-            closeCamera();
+            if (cameraFeed.videoWidth > 0 && cameraFeed.videoHeight > 0) {
+                cameraCanvas.width = cameraFeed.videoWidth;
+                cameraCanvas.height = cameraFeed.videoHeight;
+                cameraCanvas.getContext('2d').drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
+                imageDataUrl = cameraCanvas.toDataURL('image/jpeg');
+                displayPreview(imageDataUrl);
+                closeCamera();
+            } else {
+                alert("Gagal mengambil gambar, coba lagi.");
+            }
         }
         function handleFileUpload(event) {
             const file = event.target.files[0];
@@ -236,7 +251,11 @@
         // **AI PROCESSING LOGIC (UNTUK DEPLOYMENT)**
         async function handleProcess() {
             if (!imageDataUrl) { alert("Harap upload atau ambil foto struk terlebih dahulu."); return; }
+            
             loader.classList.remove('hidden');
+            loaderSpinner.classList.remove('hidden');
+            loaderSuccess.classList.add('hidden');
+            loaderError.classList.add('hidden');
             statusText.textContent = "Menganalisis struk...";
             processButton.disabled = true;
 
@@ -298,11 +317,16 @@
                     owners: []
                 }));
 
+                loaderSpinner.classList.add('hidden');
+                loaderSuccess.classList.remove('hidden');
                 statusText.textContent = "Analisis berhasil!";
                 renderAllTables();
+                setTimeout(() => loader.classList.add('hidden'), 2000);
 
             } catch (error) {
                 console.error("Error:", error);
+                loaderSpinner.classList.add('hidden');
+                loaderError.classList.remove('hidden');
                 statusText.textContent = `Terjadi kesalahan: ${error.message}`;
             } finally {
                 processButton.disabled = false;
